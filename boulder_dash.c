@@ -203,6 +203,11 @@ void update_miner(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INST
 void init_map(Object **map, ALLEGRO_BITMAP *texture[10], int r, int c, char *file_name)
 {
     FILE *fp = fopen("resources/levels/LEVEL_2.txt", "r");
+
+    if (fp == NULL){
+        fprintf(stderr, "Impossível abrir arquivo");
+    }
+
     char s;
 
     do
@@ -222,9 +227,6 @@ void init_map(Object **map, ALLEGRO_BITMAP *texture[10], int r, int c, char *fil
                 case 'B': map[i][j].ObjectID = BORDER; map[i][j].image = texture[BORDER];    break;
                 case 'R': map[i][j].ObjectID = ROCK; map[i][j].image = texture[ROCK];        break;
                 case '*': map[i][j].ObjectID = DIAMOND; map[i][j].image = texture[DIAMOND];  break;
-                case 'S': map[i][j].ObjectID = SPIDER; map[i][j].image = texture[SPIDER];    break;
-                case '!': map[i][j].ObjectID = MONSTER; map[i][j].image = texture[MONSTER];  break;
-                case 'W': map[i][j].ObjectID = WATER; map[i][j].image = texture[WATER];      break;
                 case 'D': map[i][j].ObjectID = DOOR; map[i][j].image = texture[DOOR];        break;
                 default: j--;
             }
@@ -264,7 +266,7 @@ void add_diamond(FallingObject *diamond, ALLEGRO_BITMAP *texture[10], int index,
     diamond[index].p.y = y;
 }
 
-void update_rock(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTANCE *boulder, int row, int col, FallingObject *rock, int r_num, Miner *m, FallingObject *diamond, int *d_num, MovingObject *spider, int s_num, MovingObject *monster, int m_num)
+void update_rock(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTANCE *boulder, int row, int col, FallingObject *rock, int r_num, Miner *m, FallingObject *diamond, int *d_num)
 {
     int x,y,j=0;
     ALLEGRO_BITMAP *image;
@@ -303,131 +305,6 @@ void update_rock(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTA
                     map[y+1][x].image = image;
                     rock[i].p.y = y+1;
                 }
-                else if(map[y+1][x].ObjectID == SPIDER || map[y+1][x].ObjectID == MONSTER)
-                {
-                    rock[i].alive = false;
-                    
-                    if(map[y+1][x].ObjectID == MONSTER)
-                    {
-
-                        for(int k=0; k<m_num; k++)
-                        {
-                            if(monster[k].p.x == x && monster[k].p.y == y+1)
-                                monster[k].alive = false;
-                        }
-                        if(y>2)
-                        {
-                           if(map[y-2][x].ObjectID == EARTH || map[y-2][x].ObjectID == EMPTY)
-                            {
-                                map[y-2][x].ObjectID = DIAMOND;
-                                map[y-2][x].image = texture[DIAMOND];
-                                add_diamond(diamond, texture, j++, x,y-2);
-                            }
-                        }
-
-                        if(x<col-2)
-                        {
-                            if(map[y+1][x+2].ObjectID == EARTH || map[y+1][x+2].ObjectID == EMPTY)
-                            {
-                                map[y+1][x+2].ObjectID = DIAMOND;
-                                map[y+1][x+2].image = texture[DIAMOND];
-                                add_diamond(diamond, texture, j++, x+2,y+1);
-                            }
-                        }
-
-                        if(x>2)
-                        {
-                            if(map[y+1][x-2].ObjectID == EARTH || map[y+1][x-2].ObjectID == EMPTY)
-                            {
-                                map[y+1][x-2].ObjectID = DIAMOND;
-                                map[y+1][x-2].image = texture[DIAMOND];
-                                add_diamond(diamond, texture, j++, x-2,y+1);
-                            }
-                        }
-                        if(y<row-2)
-                        {
-                           if(map[y+2][x].ObjectID == EARTH || map[y+2][x].ObjectID == EMPTY)
-                            {
-                                map[y+2][x].ObjectID = DIAMOND;
-                                map[y+2][x].image = texture[DIAMOND];
-                                add_diamond(diamond, texture, j++, x,y+2);
-                            }
-                        }
-                    }
-
-                    else
-                    {
-
-                        for(int k=0; k<s_num; k++)
-                        {
-                            if(spider[k].p.x == x && spider[k].p.y == y+1)
-                                spider[k].alive = false;
-                        }
-
-                    }
-
-
-                    map[y+1][x].ObjectID = DIAMOND;
-                    map[y+1][x].image = texture[DIAMOND];
-                    add_diamond(diamond, texture, j++, x,y+1);
-
-                    map[y][x].ObjectID = DIAMOND;
-                    map[y][x].image = texture[DIAMOND];
-                    add_diamond(diamond, texture, j++, x,y);
-
-
-                    if(map[y][x+1].ObjectID == EARTH || map[y][x+1].ObjectID == EMPTY)
-                    {
-                        map[y][x+1].ObjectID = DIAMOND;
-                        map[y][x+1].image = texture[DIAMOND];
-                        add_diamond(diamond, texture, j++, x+1,y);
-                    }
-                    if(map[y][x-1].ObjectID == EARTH || map[y][x-1].ObjectID == EMPTY)
-                    {
-                        map[y][x-1].ObjectID = DIAMOND;
-                        map[y][x-1].image = texture[DIAMOND];
-                        add_diamond(diamond, texture, j++, x-1,y);
-                    }
-                    if(map[y+1][x+1].ObjectID == EARTH || map[y+1][x+1].ObjectID == EMPTY)
-                    {
-                        map[y+1][x+1].ObjectID = DIAMOND;
-                        map[y+1][x+1].image = texture[DIAMOND];
-                        add_diamond(diamond, texture, j++, x+1,y+1);
-                    }
-                    if(map[y+1][x-1].ObjectID == EARTH || map[y+1][x-1].ObjectID == EMPTY)
-                    {
-                        map[y+1][x-1].ObjectID = DIAMOND;
-                        map[y+1][x-1].image = texture[DIAMOND];
-                        add_diamond(diamond, texture, j++, x-1,y+1);
-                    }
-
-                    if(y+2<row)
-                    {
-                        if(map[y+2][x+1].ObjectID == EARTH || map[y+2][x+1].ObjectID == EMPTY)
-                        {
-                            map[y+2][x+1].ObjectID = DIAMOND;
-                            map[y+2][x+1].image = texture[DIAMOND];
-                            add_diamond(diamond, texture, j++, x+1,y+2);
-                        }
-                        if(map[y+2][x-1].ObjectID == EARTH || map[y+2][x-1].ObjectID == EMPTY)
-                        {
-                            map[y+2][x-1].ObjectID = DIAMOND;
-                            map[y+2][x-1].image = texture[DIAMOND];
-                            add_diamond(diamond, texture, j++, x-1,y+2);
-                        }
-                        if(map[y+2][x].ObjectID == EARTH || map[y+2][x].ObjectID == EMPTY)
-                        {
-                            map[y+2][x].ObjectID = DIAMOND;
-                            map[y+2][x].image = texture[DIAMOND];
-                            add_diamond(diamond, texture, j++, x,y+2);
-                        } 
-                    }
-                    
-
-                    *d_num = j;
-
-
-                }
                 else
                 {
                     if(map[y+1][x].ObjectID == EMPTY)
@@ -460,210 +337,9 @@ void update_rock(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTA
 
 }
 
-void update_spider(Object **map, ALLEGRO_BITMAP *texture[10], int row, int col, MovingObject *spider, int s_num, Miner *m)
+
+void find_objects_len(Object **map, int row, int col, int *r_num, int *d_num)
 {
-    int r = rand(); /* random integer for left or top */
-    int x, y;
-
-    for(int i=0; i<s_num; i++)
-    {
-        x = spider[i].p.x;
-        y = spider[i].p.y;
-
-        if(spider[i].alive)
-        {
-                if(map[y][x+1].ObjectID == EMPTY || map[y][x+1].ObjectID == MINER)
-           {
-                if(map[y][x+1].ObjectID == MINER) m->alive = false;
-                map[y][x].ObjectID = EMPTY;
-                map[y][x].image = texture[EMPTY];
-                map[y][x+1].ObjectID = SPIDER;
-                map[y][x+1].image = texture[SPIDER];
-                spider[i].p.x = x+1;
-           }
-           else if(map[y+1][x].ObjectID == EMPTY || map[y+1][x].ObjectID == MINER)
-           {
-                if(map[y+1][x].ObjectID == MINER) m->alive = false;
-                map[y][x].ObjectID = EMPTY;
-                map[y][x].image = texture[EMPTY];
-                map[y+1][x].ObjectID = SPIDER;
-                map[y+1][x].image = texture[SPIDER];
-                spider[i].p.y = y+1;
-
-           }
-           else if(r%2 == 0)
-           {
-               if(map[y][x-1].ObjectID == EMPTY || map[y][x-1].ObjectID == MINER)
-               {
-                    if(map[y][x-1].ObjectID == MINER) m->alive = false;
-                    map[y][x].ObjectID = EMPTY;
-                    map[y][x].image = texture[EMPTY];
-                    map[y][x-1].ObjectID = SPIDER;
-                    map[y][x-1].image = texture[SPIDER];
-                    spider[i].p.x = x-1;
-               }
-           }
-           else
-           {
-               if(map[y-1][x].ObjectID == EMPTY || map[y-1][x].ObjectID == MINER)
-               {
-                    if(map[y-1][x].ObjectID == MINER) m->alive = false;
-                    map[y][x].ObjectID = EMPTY;
-                    map[y][x].image = texture[EMPTY];
-                    map[y-1][x].ObjectID = SPIDER;
-                    map[y-1][x].image = texture[SPIDER];
-                    spider[i].p.y = y-1;
-               }
-           }
-        }
-
-
-
-    }
-
-
-}
-
-
-void update_monster(Object **map, ALLEGRO_BITMAP *texture[10], int row, int col, Miner *m, MovingObject *monster, int m_num)
-{
-    int x, y, diff_x, diff_y;
-    bool is_moved = false;
-
-
-    for(int i=0; i<m_num; i++)
-    {
-        is_moved = false;
-        x = monster[i].p.x;
-        y = monster[i].p.y;
-
-        diff_y = m->p.y - y;
-        diff_x = m->p.x - x;
-
-        if(monster[i].alive)
-        {
-            if(diff_y<0) /* monster is under the miner */
-            {
-               if(map[y-1][x].ObjectID == EMPTY || map[y-1][x].ObjectID == MINER)
-               {
-                    if(map[y-1][x].ObjectID == MINER) m->alive = false;
-                    is_moved = true;
-                    map[y][x].ObjectID = EMPTY;
-                    map[y][x].image = texture[EMPTY];
-                    map[y-1][x].ObjectID = MONSTER;
-                    map[y-1][x].image = texture[MONSTER];
-                    monster[i].p.y = y-1;
-               }
-            }
-            if(!is_moved && diff_y>0)
-            {
-                if(map[y+1][x].ObjectID == EMPTY || map[y+1][x].ObjectID == MINER)
-               {
-                    if(map[y+1][x].ObjectID == MINER) m->alive = false;
-                    is_moved = true;
-                    map[y][x].ObjectID = EMPTY;
-                    map[y][x].image = texture[EMPTY];
-                    map[y+1][x].ObjectID = MONSTER;
-                    map[y+1][x].image = texture[MONSTER];
-                    monster[i].p.y = y+1;
-               }
-            }
-            if(!is_moved && diff_x<0) /* miner is is at left */
-            {
-                if(map[y][x-1].ObjectID == EMPTY || map[y][x-1].ObjectID == MINER)
-                {
-                    if(map[y][x-1].ObjectID == MINER) m->alive = false;
-                    is_moved = true;
-                    map[y][x].ObjectID = EMPTY;
-                    map[y][x].image = texture[EMPTY];
-                    map[y][x-1].ObjectID = MONSTER;
-                    map[y][x-1].image = texture[MONSTER];
-                    monster[i].p.x = x-1;
-                }
-            }
-            if(!is_moved && diff_x>0)
-            {
-                if(map[y][x+1].ObjectID == EMPTY || map[y][x+1].ObjectID == MINER)
-                {
-                    if(map[y][x+1].ObjectID == MINER) m->alive = false;
-                    map[y][x].ObjectID = EMPTY;
-                    map[y][x].image = texture[EMPTY];
-                    map[y][x+1].ObjectID = MONSTER;
-                    map[y][x+1].image = texture[MONSTER];
-                    monster[i].p.x = x+1;
-                }
-            }
-        }
-
-        
-    }
-
-
-}
-
-void update_water(Object **map, ALLEGRO_BITMAP *texture[10], MovingObject *water, int *water_len)
-{
-    int f_water_len = *water_len; /* first water length for not to update screen immediately */
-
-    for(int i=0; i<f_water_len; i++)
-    {
-        if(map[water[i].p.y-1][water[i].p.x].ObjectID == EARTH)
-        {
-            (*water_len)++;
-            map[water[i].p.y-1][water[i].p.x].ObjectID = WATER;
-            map[water[i].p.y-1][water[i].p.x].image = texture[WATER];
-            water[*water_len-1].ObjectID = WATER;
-            water[*water_len-1].image = texture[WATER];
-            water[*water_len-1].p.x = water[i].p.x;
-            water[*water_len-1].p.y = water[i].p.y-1;
-            water[*water_len-1].speed = water[i].speed;
-        }
-        if(map[water[i].p.y+1][water[i].p.x].ObjectID == EARTH)
-        {
-            (*water_len)++;
-            map[water[i].p.y+1][water[i].p.x].ObjectID = WATER;
-            map[water[i].p.y+1][water[i].p.x].image = texture[WATER];
-            water[*water_len-1].ObjectID = WATER;
-            water[*water_len-1].image = texture[WATER];
-            water[*water_len-1].p.x = water[i].p.x;
-            water[*water_len-1].p.y = water[i].p.y+1;
-            water[*water_len-1].speed = water[i].speed;
-        }
-
-        if(map[water[i].p.y][water[i].p.x-1].ObjectID == EARTH)
-        {
-            (*water_len)++;
-            map[water[i].p.y][water[i].p.x-1].ObjectID = WATER;
-            map[water[i].p.y][water[i].p.x-1].image = texture[WATER];
-            water[*water_len-1].ObjectID = WATER;
-            water[*water_len-1].image = texture[WATER];
-            water[*water_len-1].p.x = water[i].p.x-1;
-            water[*water_len-1].p.y = water[i].p.y;
-            water[*water_len-1].speed = water[i].speed;
-        }
-
-        if(map[water[i].p.y][water[i].p.x+1].ObjectID == EARTH)
-        {
-            (*water_len)++;
-            map[water[i].p.y][water[i].p.x+1].ObjectID = WATER;
-            map[water[i].p.y][water[i].p.x+1].image = texture[WATER];
-            water[*water_len-1].ObjectID = WATER;
-            water[*water_len-1].image = texture[WATER];
-            water[*water_len-1].p.x = water[i].p.x+1;
-            water[*water_len-1].p.y = water[i].p.y;
-            water[*water_len-1].speed = water[i].speed;
-        }
-
-
-    }
-}
-
-void find_objects_len(Object **map, int row, int col, int *s_num, int *m_num, int *w_num, int *r_num, int *d_num)
-{
-    /* reinitialization */
-    *s_num = 0;
-    *m_num = 0;
-    *w_num = 0;
     *r_num = 0;
     *d_num = 0;
 
@@ -673,9 +349,6 @@ void find_objects_len(Object **map, int row, int col, int *s_num, int *m_num, in
         {
             switch(map[y][x].ObjectID)
             {
-                case SPIDER: (*s_num)++; break;
-                case MONSTER: (*m_num)++; break;
-                case WATER: (*w_num)++; break;
                 case ROCK: (*r_num)++; break;
                 case DIAMOND: (*d_num)++; break;
             }
@@ -684,10 +357,10 @@ void find_objects_len(Object **map, int row, int col, int *s_num, int *m_num, in
 
 }
 
-void init_object(Object **map, ALLEGRO_BITMAP *texture[10], int row, int col, Miner *m, MovingObject *w_list, MovingObject *m_list, MovingObject *s_list, FallingObject *r_list, FallingObject *d_list)
+void init_object(Object **map, ALLEGRO_BITMAP *texture[10], int row, int col, Miner *m, FallingObject *r_list, FallingObject *d_list)
 {
 
-    int w_i=0, m_i=0, s_i=0, r_i=0, d_i=0;
+    int r_i=0, d_i=0;
 
     for(int y=0; y<row; y++)
         {
@@ -705,29 +378,6 @@ void init_object(Object **map, ALLEGRO_BITMAP *texture[10], int row, int col, Mi
                         m->alive = true;
                         m->life = 3;
                         m->speed = SIZE;
-                        break;
-                    case SPIDER:
-                        s_list[s_i].ObjectID = SPIDER;
-                        s_list[s_i].image = texture[SPIDER];
-                        s_list[s_i].speed = SIZE;
-                        s_list[s_i].alive = true;
-                        s_list[s_i].p.x = x;
-                        s_list[s_i++].p.y = y;
-                        break;
-                    case MONSTER:
-                        m_list[m_i].ObjectID = MONSTER;
-                        m_list[m_i].image = texture[MONSTER];
-                        m_list[m_i].speed = SIZE;
-                        m_list[m_i].alive = true;
-                        m_list[m_i].p.x = x;
-                        m_list[m_i++].p.y = y;
-                        break;
-                    case WATER:
-                        w_list[w_i].ObjectID = WATER;
-                        w_list[w_i].image = texture[WATER];
-                        w_list[w_i].speed = SIZE;
-                        w_list[w_i].p.x = x;
-                        w_list[w_i++].p.y = y;
                         break;
                     case ROCK:
                         r_list[r_i].ObjectID = ROCK;
@@ -889,8 +539,6 @@ void init_level(Level level[10])
     strcpy(level[9].file_name, "resources/levels/LEVEL_10.txt");
 
     FILE *fp;
-
-
 
     for(int i=0; i<10;i++)
     {

@@ -27,11 +27,10 @@ int main()
 {
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
-    ALLEGRO_TIMER *miner_timer, *rock_timer, *spider_timer, *water_timer, *level_timer;
+    ALLEGRO_TIMER *miner_timer, *rock_timer, *level_timer;
     ALLEGRO_FONT *score_text, *pause_text;
     ALLEGRO_BITMAP *texture[10];
     ALLEGRO_TRANSFORM camera;
-    MovingObject *water, *monster, *spider;
     FallingObject *rock, *diamond;
     bool doexit = false;
     bool redraw = true;
@@ -43,12 +42,10 @@ int main()
 
 
     int row, col;
-    int w_speed = 1.0, time_left;
-    int w_num=0, m_num=0, s_num=0, r_num=0, d_num=0; /* total numbers of objects : water, spider and monster */
+    int time_left;
+    int r_num=0, d_num=0; /* total numbers of objects : water, spider and monster */
 
     Position camera_position;
-
-
 
     /* random */
     srand(time(NULL));
@@ -63,7 +60,6 @@ int main()
     al_install_audio();
     al_init_acodec_addon();
     al_reserve_samples(20);
-
    
     /* Objects */
     Miner miner;
@@ -87,9 +83,6 @@ int main()
     texture[ROCK] = load_bitmap_at_size("resources/textures/Rock.png", SIZE, SIZE);
     texture[BORDER] = load_bitmap_at_size("resources/textures/Border.png", SIZE, SIZE);
     texture[DIAMOND] = load_bitmap_at_size("resources/textures/Diamond.png", SIZE,SIZE);
-    texture[SPIDER] = load_bitmap_at_size("resources/textures/Spider.png", SIZE, SIZE);
-    texture[MONSTER] = load_bitmap_at_size("resources/textures/Monster.png", SIZE, SIZE);
-    texture[WATER] = load_bitmap_at_size("resources/textures/Water.jpg", SIZE, SIZE);
     texture[DOOR] = load_bitmap_at_size("resources/textures/Door.png", SIZE, SIZE);
     texture_menu = load_bitmap_at_size("resources/textures/front.png", SCREEN_WIDTH, SCREEN_HEIGHT);
     texture_icon_diamond = load_bitmap_at_size("resources/textures/Diamond.png", 3*SIZE/5, 3*SIZE/5);
@@ -99,16 +92,26 @@ int main()
     row = curr_level.row;
     col = curr_level.col;
     time_left = curr_level.time;
+    
     init_map(map, texture, row,col, curr_level.file_name);
-    find_objects_len(map,row,col,&s_num,&m_num,&w_num,&r_num, &d_num);
 
-    water = (MovingObject*)malloc(sizeof(MovingObject)*(row-1)*(col-1)); /* maximum pre size of water, since every earth can be water */
-    monster = (MovingObject*)malloc(sizeof(MovingObject)*m_num);
-    spider = (MovingObject*)malloc(sizeof(MovingObject)*s_num);
+    find_objects_len(map,row,col, &r_num, &d_num);
+
+    fprintf(stderr, "n1: %d \n", d_num);
+    fprintf(stderr, "n2: %d \n", r_num);
+
     rock = (FallingObject*)malloc(sizeof(FallingObject)*r_num);
-    diamond = (FallingObject*)malloc((sizeof(FallingObject))*(d_num+(m_num*13)+(s_num*10)));
+    
+    if (rock == NULL){
+        fprintf(stderr, "malloc");
+    }
+    diamond = (FallingObject*)malloc((sizeof(FallingObject))*d_num);
 
-    init_object(map, texture, row, col, &miner, water, monster, spider, rock, diamond);
+    if (diamond == NULL){
+        fprintf(stderr, "malloc");
+    }
+
+    init_object(map, texture, row, col, &miner, rock, diamond);
 
     /* Sound samples, instances; basicly all necessary loading stuff */
     
@@ -136,7 +139,6 @@ int main()
     al_attach_sample_instance_to_mixer(starting_music, al_get_default_mixer());
 
 
-
     /* font loading */
     score_text = al_load_font("resources/fonts/zig.ttf", 27, 0);
     pause_text = al_load_font("resources/fonts/zig.ttf", 50, 0);
@@ -144,12 +146,9 @@ int main()
 
     /* event queue for event handling and timers init. */
     event_queue = al_create_event_queue();
-    miner_timer = al_create_timer(1.0 / M_FPS);
-    rock_timer = al_create_timer(1.0 / R_FPS);
-    spider_timer = al_create_timer(1.0 / S_FPS);
-    water_timer = al_create_timer(1.0 / w_speed);
+    miner_timer = al_create_timer(1.0 / (FPS / 7.5));
+    rock_timer = al_create_timer(1.0 / (FPS / 6.0));
     level_timer = al_create_timer(1.0);
-
 
 
     /* created the big picture */
@@ -160,8 +159,6 @@ int main()
     al_register_event_source(event_queue, al_get_display_event_source(display));
     al_register_event_source(event_queue, al_get_timer_event_source(miner_timer));
     al_register_event_source(event_queue, al_get_timer_event_source(rock_timer));
-    al_register_event_source(event_queue, al_get_timer_event_source(spider_timer));
-    al_register_event_source(event_queue, al_get_timer_event_source(water_timer));
     al_register_event_source(event_queue, al_get_timer_event_source(level_timer));
 
     /* cleared the screen before we start */
@@ -171,8 +168,6 @@ int main()
     /* started the times */
     al_start_timer(miner_timer);
     al_start_timer(rock_timer);
-    al_start_timer(spider_timer);
-    al_start_timer(water_timer);
     al_start_timer(level_timer);
     ALLEGRO_EVENT ev;
 
@@ -217,20 +212,9 @@ int main()
         if(game_state == PLAY && ev.timer.source == rock_timer)
         {
             redraw = true;
-            update_rock(map, texture, boulder, row, col, rock, r_num, &miner, diamond, &d_num, spider, s_num, monster, m_num);
-            update_rock(map, texture, boulder, row, col, diamond, d_num, &miner, diamond, &d_num, spider, s_num, monster, m_num); /* diamond can free fall too */
+            update_rock(map, texture, boulder, row, col, rock, r_num, &miner, diamond, &d_num);
+            update_rock(map, texture, boulder, row, col, diamond, d_num, &miner, diamond, &d_num); /* diamond can free fall too */
 
-        }
-        if(game_state == PLAY && ev.timer.source == spider_timer)
-        {
-            redraw = true;
-            update_spider(map, texture, row, col, spider, s_num, &miner);
-            update_monster(map, texture, row, col, &miner, monster, m_num);
-        }
-        if(game_state == PLAY && ev.timer.source == water_timer)
-        {
-            redraw = true;
-            update_water(map,texture,  water, &w_num);
         }
         if(game_state == PLAY && ev.timer.source == level_timer) time_left--;
 
@@ -301,27 +285,18 @@ int main()
                 col = curr_level.col;
                 time_left = curr_level.time;
                 init_map(map, texture, row,col, curr_level.file_name);
-                find_objects_len(map,row,col,&s_num,&m_num,&w_num,&r_num, &d_num);
+                find_objects_len(map,row,col,&r_num, &d_num);
 
-                free(water);
-                free(monster);
-                free(spider);
                 free(rock);
                 free(diamond);
 
-
-                water = (MovingObject*)malloc(sizeof(MovingObject)*(row-1)*(col-1)); /* maximum pre size of water, since every earth can be water */
-                monster = (MovingObject*)malloc(sizeof(MovingObject)*m_num);
-                spider = (MovingObject*)malloc(sizeof(MovingObject)*s_num);
                 rock = (FallingObject*)malloc(sizeof(FallingObject)*r_num);
-                diamond = (FallingObject*)malloc((sizeof(FallingObject))*(d_num+(m_num*13)+(s_num*10)));
-                init_object(map, texture, row, col, &miner, water, monster, spider, rock, diamond);
+                diamond = (FallingObject*)malloc((sizeof(FallingObject))*(d_num));
+                init_object(map, texture, row, col, &miner, rock, diamond);
                 miner.score = score;
                 miner.life=3+lvl_i;
                 result = 0;
                 door = 0;
-
-
             }
 
         }
@@ -354,8 +329,6 @@ int main()
     al_destroy_bitmap(texture[MINER]);
     al_destroy_bitmap(texture_menu);
     al_destroy_timer(miner_timer);
-    al_destroy_timer(spider_timer);
-    al_destroy_timer(water_timer);
     al_destroy_timer(level_timer);
     al_destroy_timer(rock_timer);
     al_destroy_event_queue(event_queue);
@@ -372,9 +345,6 @@ int main()
     al_destroy_sample_instance(starting_music);
 
     free(map);
-    free(water);
-    free(monster);
-    free(spider);
     free(rock);
     free(diamond);
 
