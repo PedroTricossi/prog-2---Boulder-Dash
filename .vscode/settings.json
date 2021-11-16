@@ -3,6 +3,7 @@
         "boulder_dash.h": "c",
         "keyboard.h": "c",
         "allegro_image.h": "c",
-        "allegro_primitives.h": "c"
+        "allegro_primitives.h": "c",
+        "allegro_acodec.h": "c"
     }
 }

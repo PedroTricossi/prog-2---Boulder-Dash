@@ -10,6 +10,8 @@
 #define SCREEN_WIDTH 1366
 #define SCREEN_HEIGHT 768
 #define SIZE 40.0
+#define path "./resources/levels/"
+
 
 typedef enum{UP,DOWN, RIGHT, LEFT, PLAY, PAUSE} STATES;
 typedef enum {EMPTY, MINER, EARTH, BORDER, ROCK, DIAMOND, SPIDER, MONSTER, WATER, DOOR}ID;
@@ -60,7 +62,6 @@ typedef struct
 
 ALLEGRO_BITMAP *load_bitmap_at_size(const char *filename, int w, int h);
 
-
 /*  miners mechanics, generally due to keyboard changing, this movement effects rocks, diamonds which are parameters*/ 
 void update_miner(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTANCE *walk_empty,ALLEGRO_SAMPLE_INSTANCE *walk_earth, ALLEGRO_SAMPLE_INSTANCE *boulder, ALLEGRO_SAMPLE_INSTANCE *collect_diamond, Miner *m, FallingObject *rock, FallingObject *diamond, int r_num, int d_num, int move, int *result);
 
@@ -86,8 +87,8 @@ void draw_score(ALLEGRO_FONT *text_font, ALLEGRO_BITMAP *texture[10], ALLEGRO_BI
 bool check_dead(Miner *m);
 int is_over(Object **map, int row, int col, Miner *m, int time_left, Level level);
 int create_door(Object **map, ALLEGRO_BITMAP *texture[10], Miner *m, Level level);
-void change_level(Level *curr_level, const Level next_level);
-void init_level(Level level[10]);
+void change_level(Level *curr_level, Level *next_level);
+Level* init_level();
 
 void destroy_music();
 

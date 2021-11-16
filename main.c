@@ -12,15 +12,10 @@
 #include <allegro5/keyboard.h>
 #include <allegro5/timer.h>
 #include <allegro5/color.h>
+#include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
 #include "boulder_dash.h"
-
-ALLEGRO_BITMAP *texture_menu, *texture_icon_diamond;
-ALLEGRO_SAMPLE *sound_walk_earth, *sound_walk_empty, *sound_boulder, *sound_diamond, *sound_melody, *sound_start;
-ALLEGRO_SAMPLE_INSTANCE *walk_empty, *walk_earth, *boulder, *collect_diamond, *music, *starting_music;
-
-bool keys[4] = {false,false,false, false};
 
 
 int main()
@@ -29,24 +24,33 @@ int main()
     ALLEGRO_EVENT_QUEUE *event_queue;
     ALLEGRO_TIMER *miner_timer, *rock_timer, *level_timer;
     ALLEGRO_FONT *score_text, *pause_text;
-    ALLEGRO_BITMAP *texture[10];
     ALLEGRO_TRANSFORM camera;
+    ALLEGRO_BITMAP *texture_icon_diamond;
+    ALLEGRO_BITMAP *texture[8];
+    ALLEGRO_SAMPLE *sound_walk_earth, *sound_walk_empty, *sound_boulder, *sound_diamond, *sound_melody, *sound_start;
+    ALLEGRO_SAMPLE_INSTANCE *walk_empty, *walk_earth, *boulder, *collect_diamond, *music, *starting_music;
     FallingObject *rock, *diamond;
+    Level *level;
+    Miner miner;
+    Position camera_position;
+
     bool doexit = false;
     bool redraw = true;
-    Level level[10];
-    int door = 0, /* the door is not created yet, flag */
-        result = 0, /* result of that game level */
-        score = 0,
-        game_state=PAUSE;
+    bool pressed = false;
+    bool keys[4] = {false,false,false, false};
 
+    int door = 0;
+    int result = 0; 
+    int score = 0;
+    int game_state=PAUSE;
 
     int row, col;
     int time_left;
-    int r_num=0, d_num=0; /* total numbers of objects : water, spider and monster */
+    int r_num=0, d_num=0;
 
-    Position camera_position;
-
+    Level curr_level;
+    int lvl_i=0; 
+    
     /* random */
     srand(time(NULL));
 
@@ -62,56 +66,18 @@ int main()
     al_reserve_samples(20);
    
     /* Objects */
-    Miner miner;
-    Level curr_level;
-    int lvl_i=0;
 
-    init_level(level);
-    change_level(&curr_level, level[lvl_i]); /* starting from level 1 */
-
-    row = level[9].row; col = level[9].col; /* map size taken as the size of the biggest map */
-
-    Object **map = (Object **)malloc(row * sizeof(Object*));
-    for (int i=0; i<row; i++)
-         map[i] = (Object *)malloc(col * sizeof(Object));
-
+    level = init_level();
 
     /* graphics */
     texture[EMPTY] = load_bitmap_at_size("resources/textures/Empty.png",SIZE, SIZE);
-    texture[EARTH] = load_bitmap_at_size("resources/textures/Earth.png", SIZE, SIZE);
+    texture[EARTH] = load_bitmap_at_size("resources/textures/sand.jpg", SIZE, SIZE);
     texture[MINER] = load_bitmap_at_size("resources/textures/Miner.png", SIZE, SIZE);
     texture[ROCK] = load_bitmap_at_size("resources/textures/Rock.png", SIZE, SIZE);
-    texture[BORDER] = load_bitmap_at_size("resources/textures/Border.png", SIZE, SIZE);
+    texture[BORDER] = load_bitmap_at_size("resources/textures/wood.jpg", SIZE, SIZE);
     texture[DIAMOND] = load_bitmap_at_size("resources/textures/Diamond.png", SIZE,SIZE);
     texture[DOOR] = load_bitmap_at_size("resources/textures/Door.png", SIZE, SIZE);
-    texture_menu = load_bitmap_at_size("resources/textures/front.png", SCREEN_WIDTH, SCREEN_HEIGHT);
     texture_icon_diamond = load_bitmap_at_size("resources/textures/Diamond.png", 3*SIZE/5, 3*SIZE/5);
-
-
-
-    row = curr_level.row;
-    col = curr_level.col;
-    time_left = curr_level.time;
-    
-    init_map(map, texture, row,col, curr_level.file_name);
-
-    find_objects_len(map,row,col, &r_num, &d_num);
-
-    fprintf(stderr, "n1: %d \n", d_num);
-    fprintf(stderr, "n2: %d \n", r_num);
-
-    rock = (FallingObject*)malloc(sizeof(FallingObject)*r_num);
-    
-    if (rock == NULL){
-        fprintf(stderr, "malloc");
-    }
-    diamond = (FallingObject*)malloc((sizeof(FallingObject))*d_num);
-
-    if (diamond == NULL){
-        fprintf(stderr, "malloc");
-    }
-
-    init_object(map, texture, row, col, &miner, rock, diamond);
 
     /* Sound samples, instances; basicly all necessary loading stuff */
     
@@ -137,6 +103,29 @@ int main()
     al_attach_sample_instance_to_mixer(collect_diamond,al_get_default_mixer());
     al_attach_sample_instance_to_mixer(music,al_get_default_mixer());
     al_attach_sample_instance_to_mixer(starting_music, al_get_default_mixer());
+
+    change_level(&curr_level, level); /* starting from level 1 */
+
+    row = curr_level.row;
+    col = curr_level.col;
+
+    Object **map = (Object **)malloc(row * sizeof(Object*));
+    for (int i=0; i<row; i++)
+         map[i] = (Object *)malloc(col * sizeof(Object));
+
+    time_left = curr_level.time;
+    
+    init_map(map, texture, row,col, curr_level.file_name);
+
+    find_objects_len(map,row,col, &r_num, &d_num);
+
+
+    rock = (FallingObject*)malloc(sizeof(FallingObject)*r_num);
+    
+    diamond = (FallingObject*)malloc((sizeof(FallingObject))*d_num);
+
+
+    init_object(map, texture, row, col, &miner, rock, diamond);
 
 
     /* font loading */
@@ -177,8 +166,7 @@ int main()
     while(game_state != PLAY)
     {
         al_wait_for_event(event_queue,&ev);
-        al_draw_bitmap(texture_menu, 0,0, 0);
-        al_draw_textf(pause_text, al_map_rgb(147,81,178), SCREEN_WIDTH/2, SCREEN_HEIGHT/2+200, ALLEGRO_ALIGN_CENTER, "PRESS SPACE TO PLAY.");
+        al_draw_textf(pause_text, al_map_rgb(147,81,178), SCREEN_WIDTH/2, SCREEN_HEIGHT/2, ALLEGRO_ALIGN_CENTER, "PRESS SPACE TO PLAY.");
         al_flip_display();
         al_clear_to_color(al_map_rgb(0,0,0));
 
@@ -220,16 +208,39 @@ int main()
 
         else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
             doexit = true;
+        
         else if(ev.type == ALLEGRO_EVENT_KEY_DOWN)
         {
             switch(ev.keyboard.keycode)
             {
-                case ALLEGRO_KEY_UP:     keys[UP] = true;    break;
-                case ALLEGRO_KEY_DOWN:   keys[DOWN]= true;   break;
-                case ALLEGRO_KEY_RIGHT:  keys[RIGHT]= true;  break;
-                case ALLEGRO_KEY_LEFT:   keys[LEFT]= true;   break;
-                case ALLEGRO_KEY_ESCAPE: game_state = PAUSE; break;
-                case ALLEGRO_KEY_SPACE:  game_state = PLAY;  break;
+                case ALLEGRO_KEY_UP:
+                    keys[UP] = true;
+                    pressed = true;
+                    break;
+                case ALLEGRO_KEY_DOWN:
+                    keys[DOWN]= true;
+                    pressed = true;  
+                    break;
+
+                case ALLEGRO_KEY_RIGHT:
+                    keys[RIGHT]= true;
+                    pressed = true;
+                    break;
+
+                case ALLEGRO_KEY_LEFT:
+                    keys[LEFT]= true;
+                    pressed = true;
+                    break;
+
+                case ALLEGRO_KEY_ESCAPE:
+                    game_state = PAUSE;
+                    pressed = true;
+                    break;
+
+                case ALLEGRO_KEY_SPACE:
+                    game_state = PLAY;
+                    pressed = true;
+                    break;
             }
 
         }
@@ -252,12 +263,16 @@ int main()
             al_flip_display();
             al_clear_to_color(al_map_rgb(0,0,0));
         }
+
         if(game_state == PLAY && redraw && al_is_event_queue_empty(event_queue))
         {
             redraw = false;
             check_dead(&miner);
             draw_map(map,row,col,miner);
-            if(!door && miner.diamond == curr_level.total_diamond) door = create_door(map, texture, &miner, curr_level);
+            
+            if(!door && (curr_level.time - 5) > time_left && pressed == false)
+                door = create_door(map, texture, &miner, curr_level);
+
             draw_score(score_text, texture, texture_icon_diamond, music, &miner, time_left, curr_level, camera_position);
             al_set_sample_instance_speed(music, 1+10/(time_left+1));
             al_flip_display();
@@ -279,8 +294,8 @@ int main()
                 else miner.score += (time_left*20)+(miner.life*10);
                 score = miner.score;
 
-
-                change_level(&curr_level, level[++lvl_i]);
+                level++; 
+                change_level(&curr_level, level);
                 row = curr_level.row;
                 col = curr_level.col;
                 time_left = curr_level.time;
@@ -306,13 +321,11 @@ int main()
     while(!doexit)
     {
         al_wait_for_event(event_queue,&ev);
-        al_draw_bitmap(texture_menu, 0,0, 0);
         al_draw_textf(pause_text, al_map_rgb(147,81,178), SCREEN_WIDTH/2, SCREEN_HEIGHT/2+200, ALLEGRO_ALIGN_CENTER, "THANKS FOR PLAYING.");
         al_draw_textf(pause_text, al_map_rgb(147,81,178), SCREEN_WIDTH/2, SCREEN_HEIGHT/2+270, ALLEGRO_ALIGN_CENTER, "YOUR SCORE: %.6d", miner.score);
         al_flip_display();
         al_clear_to_color(al_map_rgb(0,0,0));
         if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) doexit = true;
-        
         
     }
 
@@ -327,7 +340,6 @@ int main()
     al_destroy_bitmap(texture[WATER]);
     al_destroy_bitmap(texture[EMPTY]);
     al_destroy_bitmap(texture[MINER]);
-    al_destroy_bitmap(texture_menu);
     al_destroy_timer(miner_timer);
     al_destroy_timer(level_timer);
     al_destroy_timer(rock_timer);

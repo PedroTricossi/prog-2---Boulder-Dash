@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdio.h>
+#include <dirent.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_primitives.h>
@@ -51,7 +52,6 @@ ALLEGRO_BITMAP *load_bitmap_at_size(const char *filename, int w, int h)
 
   return resized_bmp;
 }
-
 
 void update_miner(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTANCE *walk_empty,ALLEGRO_SAMPLE_INSTANCE *walk_earth, ALLEGRO_SAMPLE_INSTANCE *boulder, ALLEGRO_SAMPLE_INSTANCE *collect_diamond, Miner *m, FallingObject *rock, FallingObject *diamond, int r_num, int d_num, int move, int *result)
 {
@@ -202,7 +202,8 @@ void update_miner(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INST
 
 void init_map(Object **map, ALLEGRO_BITMAP *texture[10], int r, int c, char *file_name)
 {
-    FILE *fp = fopen("resources/levels/LEVEL_2.txt", "r");
+    FILE *fp = fopen(file_name, "r");
+    fprintf(stderr, "%s\n", file_name);
 
     if (fp == NULL){
         fprintf(stderr, "Impossível abrir arquivo");
@@ -513,41 +514,61 @@ int create_door(Object **map, ALLEGRO_BITMAP *texture[10], Miner *m, Level level
     return 1;
 }
 
-void change_level(Level *curr_level, const Level next_level)
+void change_level(Level *curr_level, Level *next_level)
 {
-    curr_level->row = next_level.row;
-    curr_level->col = next_level.col;
-    curr_level->time = next_level.time;
-    curr_level->total_diamond = next_level.total_diamond;
-    curr_level->x_radius = next_level.x_radius;
-    curr_level->y_radius = next_level.y_radius;
-    curr_level->number = next_level.number;
-    strcpy(curr_level->file_name, next_level.file_name);
+    curr_level->row = next_level->row;
+    curr_level->col = next_level->col;
+    curr_level->time = next_level->time;
+    curr_level->total_diamond = next_level->total_diamond;
+    curr_level->x_radius = next_level->x_radius;
+    curr_level->y_radius = next_level->y_radius;
+    curr_level->number = next_level->number;
+    strcpy(curr_level->file_name, next_level->file_name);
 }
 
-void init_level(Level level[10])
+Level* init_level()
 {
-    strcpy(level[0].file_name, "resources/levels/LEVEL_2.txt");
-    strcpy(level[1].file_name, "resources/levels/LEVEL_2.txt");
-    strcpy(level[2].file_name, "resources/levels/LEVEL_3.txt");
-    strcpy(level[3].file_name, "resources/levels/LEVEL_4.txt");
-    strcpy(level[4].file_name, "resources/levels/LEVEL_5.txt");
-    strcpy(level[5].file_name, "resources/levels/LEVEL_6.txt");
-    strcpy(level[6].file_name, "resources/levels/LEVEL_7.txt");
-    strcpy(level[7].file_name, "resources/levels/LEVEL_8.txt");
-    strcpy(level[8].file_name, "resources/levels/LEVEL_9.txt");
-    strcpy(level[9].file_name, "resources/levels/LEVEL_10.txt");
+    struct dirent** dirent = NULL;
+    Level* level;
+    int numLevel;
+    char *levelpath;
+    int i;
+
+    numLevel = scandir(path, &dirent, NULL, alphasort);
+    level  = malloc(numLevel * sizeof(level));
+    levelpath  = malloc(1064 * sizeof(char));
+
+    for(i=2; i< numLevel; i++){
+        strcpy(levelpath, path);
+        fprintf(stderr, "%s\n", levelpath);
+
+        strcat(levelpath, dirent[i]->d_name);
+        fprintf(stderr, "%s\n", levelpath);
+
+        strcpy(level[i-2].file_name, levelpath);
+        fprintf(stderr, "%s\n", level[i-2].file_name);
+
+        free(dirent[i]);
+    }
 
     FILE *fp;
 
-    for(int i=0; i<10;i++)
+    for(int i=0; i<2;i++)
     {
         fp = fopen(level[i].file_name, "r");
+        
+        
+        if(fp == NULL)
+            fprintf(stderr, "erro arquivo");
+        
+
         level[i].number = i+1;
         fscanf(fp,"%d\n%d %d\n", &level[i].total_diamond, &level[i].row, &level[i].col);
         fscanf(fp,"%d %f %f", &level[i].time, &level[i].x_radius, &level[i].y_radius);
+
         fclose(fp);
     }
 
+    return level;
 
 }
