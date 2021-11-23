@@ -13,7 +13,7 @@
 #define path "./resources/levels/"
 
 
-typedef enum{UP,DOWN, RIGHT, LEFT, PLAY, PAUSE} STATES;
+typedef enum{UP,DOWN, RIGHT, LEFT, PLAY, PAUSE, HELP} STATES;
 typedef enum {EMPTY, MINER, EARTH, BORDER, ROCK, DIAMOND, SPIDER, MONSTER, WATER, DOOR}ID;
 
 

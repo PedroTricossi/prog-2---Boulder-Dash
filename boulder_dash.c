@@ -203,7 +203,6 @@ void update_miner(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INST
 void init_map(Object **map, ALLEGRO_BITMAP *texture[10], int r, int c, char *file_name)
 {
     FILE *fp = fopen(file_name, "r");
-    fprintf(stderr, "%s\n", file_name);
 
     if (fp == NULL){
         fprintf(stderr, "Impossível abrir arquivo");
@@ -473,8 +472,9 @@ int is_over(Object **map, int row, int col, Miner *m, int time_left, Level level
         {
             for(int x=0; x<row; x++)
             {
-                 if(map[y][x].ObjectID == DOOR && m->p.x == x && m->p.y == y) result = 1;
-                 return result;
+                if(map[y][x].ObjectID == DOOR && m->p.x == x && m->p.y == y)
+                    result = 1;
+                return result;
             }
         }
 
@@ -540,13 +540,10 @@ Level* init_level()
 
     for(i=2; i< numLevel; i++){
         strcpy(levelpath, path);
-        fprintf(stderr, "%s\n", levelpath);
 
         strcat(levelpath, dirent[i]->d_name);
-        fprintf(stderr, "%s\n", levelpath);
 
         strcpy(level[i-2].file_name, levelpath);
-        fprintf(stderr, "%s\n", level[i-2].file_name);
 
         free(dirent[i]);
     }
