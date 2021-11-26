@@ -11,7 +11,7 @@
 #define SCREEN_HEIGHT 768
 #define SIZE 40.0
 #define path "./resources/levels/"
-
+#define ARQUIVO "resources/scores/scores.txt"
 
 typedef enum{UP,DOWN, RIGHT, LEFT, PLAY, PAUSE, HELP} STATES;
 typedef enum {EMPTY, MINER, EARTH, BORDER, ROCK, DIAMOND, SPIDER, MONSTER, WATER, DOOR}ID;
@@ -36,7 +36,7 @@ typedef struct
     float speed;
     Position p;
     bool alive;
-    unsigned int diamond, score, life;
+    int diamond, score, life;
 
 }Miner;
 
@@ -89,6 +89,7 @@ int is_over(Object **map, int row, int col, Miner *m, int time_left, Level level
 int create_door(Object **map, ALLEGRO_BITMAP *texture[10], Miner *m, Level level);
 void change_level(Level *curr_level, Level *next_level);
 Level* init_level();
+void get_score(int score, int* top_scores);
 
 void destroy_music();
 

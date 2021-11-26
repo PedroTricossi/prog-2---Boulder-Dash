@@ -43,10 +43,12 @@ int main()
     int result = 0; 
     int score = 0;
     int game_state=PAUSE;
+    int top_scores[6];
 
     int row, col;
     int time_left;
     int r_num=0, d_num=0;
+    int i;
 
     Level curr_level;
     int lvl_i=0; 
@@ -130,7 +132,7 @@ int main()
 
     /* font loading */
     score_text = al_load_font("resources/fonts/zig.ttf", 27, 0);
-    pause_text = al_load_font("resources/fonts/zig.ttf", 50, 0);
+    pause_text = al_load_font("resources/fonts/zig.ttf", 42, 0);
 
 
     /* event queue for event handling and timers init. */
@@ -268,7 +270,7 @@ int main()
 
         if(game_state == HELP)
         {
-            al_draw_textf(pause_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 340, ALLEGRO_ALIGN_CENTER, "TELA DE AJUDA");
+            al_draw_textf(pause_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 342, ALLEGRO_ALIGN_CENTER, "TELA DE AJUDA");
             al_draw_textf(score_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 250, ALLEGRO_ALIGN_CENTER, "BEM-VINDO AO BOULDER DASH!!! ");
             al_draw_textf(score_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 120, ALLEGRO_ALIGN_CENTER, "SEU OBJETIVO É PEGAR TODOS OS DIAMANTES, SEM MORRER.");
             al_draw_textf(score_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 , ALLEGRO_ALIGN_CENTER, "VOCÊ PODE USAR AS SETAS DO TECLADO PARA SE MOVER");
@@ -276,7 +278,7 @@ int main()
 
             al_draw_textf(score_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 280, ALLEGRO_ALIGN_CENTER, "DESENVOLVIDO POR:");
             al_draw_textf(score_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 310, ALLEGRO_ALIGN_CENTER, "PEDRO DOMINGOS TRICOSSI DOS SANTOS");
-            al_draw_textf(score_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 340, ALLEGRO_ALIGN_CENTER, "@UFPR - 2021/PROGRAMAÇÃO 2");
+            al_draw_textf(score_text, al_map_rgb(136, 56, 255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 342, ALLEGRO_ALIGN_CENTER, "@UFPR - 2021/PROGRAMAÇÃO 2");
             al_flip_display();
             al_clear_to_color(al_map_rgb(0,0,0));
         }
@@ -349,20 +351,26 @@ int main()
     }
 
 
+    get_score(miner.score, top_scores);
     doexit = false;
     while(!doexit)
     {
-        al_clear_to_color(al_map_rgb(0,100,0));
-        al_draw_textf(pause_text, al_map_rgb(147,81,178), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 150, ALLEGRO_ALIGN_CENTER, "THANKS FOR PLAYING.");
-        al_draw_textf(pause_text, al_map_rgb(147,81,178), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 + 150, ALLEGRO_ALIGN_CENTER, "YOUR SCORE: %.6d", miner.score);
+        al_clear_to_color(al_map_rgb(42,42,42));
+        al_draw_textf(pause_text, al_map_rgb(172,84,242), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 342, ALLEGRO_ALIGN_CENTER, "THANKS FOR PLAYING.");
+        al_draw_textf(pause_text, al_map_rgb(104,94,242), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 280, ALLEGRO_ALIGN_CENTER, "YOUR SCORE: %.6d", miner.score);
+
+        al_draw_textf(pause_text, al_map_rgb(136,56,255), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 150, ALLEGRO_ALIGN_CENTER, "TOP SCORES:");
+
+        for(i = 0; i<5 ;i++){
+            int r = 136 + 23*i;
+            int g = 150 - 15*i;
+            int b = 255 - 25*i;
+
+            al_draw_textf(pause_text, al_map_rgb(r, g, b), SCREEN_WIDTH/2, SCREEN_HEIGHT/2 - 80 + (60 * i), ALLEGRO_ALIGN_CENTER,"%.6d", top_scores[i]);
+        }
+
         al_flip_display();
-
-        // 
-        // al_flip_display();
-        // al_clear_to_color(al_map_rgb(0,0,0));
     }
-
-    
     
     /* all destroy stuff */
     al_destroy_display(display);

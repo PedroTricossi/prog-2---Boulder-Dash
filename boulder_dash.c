@@ -569,3 +569,44 @@ Level* init_level()
     return level;
 
 }
+
+void get_score(int score, int* top_scores){
+    int i, j;
+
+    FILE* arq = fopen ("./resources/scores/scores.txt", "r");
+    if (!arq)
+    {
+        perror ("Erro ao abrir arquivo") ;
+        exit (1) ;
+    }
+
+    for (i=0; i<5; i++)
+    {
+        fscanf (arq, "%d\n", &top_scores[i]);
+    }
+
+    if(score > top_scores[4]){
+        while (score > top_scores[i] && i > 0)
+        {
+            i--;
+        }
+
+        for(j = 4; j > i - 1;j--){
+            top_scores[j + 1] = top_scores[j];
+        }
+
+        top_scores[i] = score;
+
+        arq = fopen ("./resources/scores/scores.txt", "w");
+
+        for (i=0; i<5; i++)
+        {
+            fprintf(arq, "%d\n", top_scores[i]);
+        }
+    }
+
+
+    fclose (arq) ;
+    
+    return;
+}
