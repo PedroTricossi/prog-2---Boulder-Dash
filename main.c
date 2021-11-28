@@ -329,8 +329,8 @@ int main()
             {
                 if(result == -1)
                 {
-                    score -= miner.diamond*10;
-                    lvl_i--; /* not changing */
+                    doexit = true;
+                    break;
                 }
 
                 else if(pressed > 3)
