@@ -17,52 +17,66 @@
 #include <allegro5/color.h>
 #include "boulder_dash.h"
 
+// Valida se a alocação ocorreu de forma correta
+void validade_alocation(void* ptr){
+    if(ptr == NULL){
+        fprintf(stderr, "Erro na alocação");
+        exit(1);
+    }
+}
+
+// Verifica se o arquivo foi aberto de forma correta
+void validade_file(FILE* file){
+    if(file == NULL){
+        fprintf(stderr, "Erro ao abrir arquivo");
+        exit(1);
+    }
+}
+
+// Carrega bitmap do tamanho correto para a tela
 ALLEGRO_BITMAP *load_bitmap_at_size(const char *filename, int w, int h)
 {
   ALLEGRO_BITMAP *resized_bmp, *loaded_bmp, *prev_target;
 
-  // 1. create a temporary bitmap of size we want
   resized_bmp = al_create_bitmap(w, h);
-  if (!resized_bmp) return NULL;
-  // 2. load the bitmap at the original size
+  if (!resized_bmp)
+    return NULL;
+
   loaded_bmp = al_load_bitmap(filename);
+
   if (!loaded_bmp)
   {
      al_destroy_bitmap(resized_bmp);
      return NULL;
   }
 
-  // 3. set the target bitmap to the resized bmp
   prev_target = al_get_target_bitmap();
   al_set_target_bitmap(resized_bmp);
 
-  // 4. copy the loaded bitmap to the resized bmp
   al_draw_scaled_bitmap(loaded_bmp,
-     0, 0,                                // source origin
-     al_get_bitmap_width(loaded_bmp),     // source width
-     al_get_bitmap_height(loaded_bmp),    // source height
-     0, 0,                                // target origin
-     w, h,                                // target dimensions
-     0                                    // flags
+     0, 0,                                
+     al_get_bitmap_width(loaded_bmp),     
+     al_get_bitmap_height(loaded_bmp),    
+     0, 0,                                
+     w, h,                                
+     0
   );
 
-  // 5. restore the previous target and clean up
   al_set_target_bitmap(prev_target);
   al_destroy_bitmap(loaded_bmp);
 
   return resized_bmp;
 }
 
+// Atualiza o mineiro em relação ao mapa
 void update_miner(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTANCE *walk_empty,ALLEGRO_SAMPLE_INSTANCE *walk_earth, ALLEGRO_SAMPLE_INSTANCE *boulder, ALLEGRO_SAMPLE_INSTANCE *collect_diamond, Miner *m, FallingObject *rock, FallingObject *diamond, int r_num, int d_num, int move, int *result)
 {
     Object *ob_up, *ob_down, *ob_right, *ob_left;
 
-    /* shortcut: nicknames :) */
     ob_up = &map[m->p.y-1][m->p.x];
     ob_down = &map[m->p.y+1][m->p.x];
     ob_right = &map[m->p.y][m->p.x+1];
     ob_left = &map[m->p.y][m->p.x-1];
-
 
     if(move == UP)
     {
@@ -193,27 +207,21 @@ void update_miner(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INST
 
     map[m->p.y][m->p.x].ObjectID = MINER;
     map[m->p.y][m->p.x].image = texture[MINER];
-
-
-
-
-
 }
 
+
+// Inicia o mapa
 void init_map(Object **map, ALLEGRO_BITMAP *texture[10], int r, int c, char *file_name)
 {
     FILE *fp = fopen(file_name, "r");
-
-    if (fp == NULL){
-        fprintf(stderr, "Impossível abrir arquivo");
-    }
+    validade_file(fp);
 
     char s;
 
     do
     {
         s = fgetc(fp);
-    }while(s != '-'); /* map stars flag */
+    }while(s != '-');
 
     for(int i=0; i<r; i++)
     {
@@ -234,38 +242,24 @@ void init_map(Object **map, ALLEGRO_BITMAP *texture[10], int r, int c, char *fil
     }
 
     fclose(fp);
-
 }
 
+// Desenha o mapa
 void draw_map(Object **map, int row, int col, Miner m)
 {
-
-
     for(int y=0; y<row; y++)
     {
         for(int x=0; x<col; x++)
         {
-
             switch(map[y][x].ObjectID)
             {
                 default: al_draw_bitmap(map[y][x].image, x*SIZE, y*SIZE,0);
             }
-
-
         }
     }
 }
 
-void add_diamond(FallingObject *diamond, ALLEGRO_BITMAP *texture[10], int index, int x, int y)
-{
-    diamond[index].alive = true;
-    diamond[index].image = texture[DIAMOND];
-    diamond[index].is_falling= false;
-    diamond[index].ObjectID = DIAMOND;
-    diamond[index].p.x = x;
-    diamond[index].p.y = y;
-}
-
+// Atualiza a posição das pedras em relação ao mapa (também usado para os diamantes)
 void update_rock(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTANCE *boulder, int row, int col, FallingObject *rock, int r_num, Miner *m, FallingObject *diamond, int *d_num)
 {
     int x,y,j=0;
@@ -331,13 +325,10 @@ void update_rock(Object **map, ALLEGRO_BITMAP *texture[10], ALLEGRO_SAMPLE_INSTA
             }
             else    rock[i].is_falling = false;
         }
-
     }
-
-
 }
 
-
+// Carrega o numero de pedras e de diamantes no mapa
 void find_objects_len(Object **map, int row, int col, int *r_num, int *d_num)
 {
     *r_num = 0;
@@ -357,6 +348,7 @@ void find_objects_len(Object **map, int row, int col, int *r_num, int *d_num)
 
 }
 
+// Inicia os objetos
 void init_object(Object **map, ALLEGRO_BITMAP *texture[10], int row, int col, Miner *m, FallingObject *r_list, FallingObject *d_list)
 {
 
@@ -400,7 +392,7 @@ void init_object(Object **map, ALLEGRO_BITMAP *texture[10], int row, int col, Mi
 
 }
 
-
+// atualiza a camera para uma melhor jogabilidade
 void camera_update(Position *camera_position, int x, int y, int width, int height, int row , int col, Level lvl)
 {
 
@@ -414,13 +406,11 @@ void camera_update(Position *camera_position, int x, int y, int width, int heigh
         camera_position->x = 0;
     if(camera_position->y <0)
         camera_position->y = 0;
-
-
 }
 
+// Desenha a pontuação em tempo real
 void draw_score(ALLEGRO_FONT *text_font,ALLEGRO_BITMAP *texture[10], ALLEGRO_BITMAP *icon_diamond, ALLEGRO_SAMPLE_INSTANCE *music, Miner *m, int time_left, Level level, Position camera_position)
 {
-
     int x,y;
     x = camera_position.x;
     y = camera_position.y;
@@ -439,7 +429,7 @@ void draw_score(ALLEGRO_FONT *text_font,ALLEGRO_BITMAP *texture[10], ALLEGRO_BIT
     al_play_sample_instance(music);
 }
 
-
+// Checa se o mineiro está morto
 bool check_dead(Miner *m)
 {
     bool over = false;
@@ -460,7 +450,8 @@ bool check_dead(Miner *m)
     return over;
 }
 
-int is_over(Object **map, int row, int col, Miner *m, int time_left, Level level)
+// Checa se chegou ao final do jogo
+int shall_we_pass(Object **map, int row, int col, Miner *m, int time_left, Level level)
 {
     int result=0;
 
@@ -477,12 +468,12 @@ int is_over(Object **map, int row, int col, Miner *m, int time_left, Level level
                 return result;
             }
         }
-
     }
 
     return result;
 }
 
+// Desenha a porta de saida
 int create_door(Object **map, ALLEGRO_BITMAP *texture[10], Miner *m, Level level)
 {
     int x,y;
@@ -514,6 +505,7 @@ int create_door(Object **map, ALLEGRO_BITMAP *texture[10], Miner *m, Level level
     return 1;
 }
 
+// Muda o nivel atual para o proximo nível
 void change_level(Level *curr_level, Level *next_level)
 {
     curr_level->row = next_level->row;
@@ -526,20 +518,26 @@ void change_level(Level *curr_level, Level *next_level)
     strcpy(curr_level->file_name, next_level->file_name);
 }
 
+// Inicia o nível
 Level* init_level()
 {
     struct dirent** dirent = NULL;
     Level* level;
+    FILE *fp;
     int numLevel;
     char *levelpath;
     int i;
 
-    numLevel = scandir(path, &dirent, NULL, alphasort);
+    numLevel = scandir(PATH, &dirent, NULL, alphasort);
+
     level  = malloc(numLevel * sizeof(level));
-    levelpath  = malloc(1064 * sizeof(char));
+    validade_alocation(level);
+
+    levelpath  = malloc(WORDSIZE * sizeof(char));
+    validade_alocation(levelpath);
 
     for(i=2; i< numLevel; i++){
-        strcpy(levelpath, path);
+        strcpy(levelpath, PATH);
 
         strcat(levelpath, dirent[i]->d_name);
 
@@ -548,41 +546,32 @@ Level* init_level()
         free(dirent[i]);
     }
 
-    FILE *fp;
-
-    for(int i=0; i<2;i++)
+    for(int i=0; i<(numLevel - 2);i++)
     {
         fp = fopen(level[i].file_name, "r");
+        validade_file(fp);
         
-        
-        if(fp == NULL)
-            fprintf(stderr, "erro arquivo");
-        
-
         level[i].number = i+1;
         fscanf(fp,"%d\n%d %d\n", &level[i].total_diamond, &level[i].row, &level[i].col);
         fscanf(fp,"%d %f %f", &level[i].time, &level[i].x_radius, &level[i].y_radius);
 
         fclose(fp);
     }
-
+    
     return level;
-
 }
 
+// Le a pontuação salva em disco e atualiza, caso necessário
 void get_score(int score, int* top_scores){
     int i, j;
 
-    FILE* arq = fopen ("./resources/scores/scores.txt", "r");
-    if (!arq)
-    {
-        perror ("Erro ao abrir arquivo") ;
-        exit (1) ;
-    }
+    FILE* fp = fopen (SCOREPATH, "r");
+    validade_file(fp);
+
 
     for (i=0; i<5; i++)
     {
-        fscanf (arq, "%d\n", &top_scores[i]);
+        fscanf (fp, "%d\n", &top_scores[i]);
     }
 
     if(score > top_scores[4]){
@@ -597,16 +586,14 @@ void get_score(int score, int* top_scores){
 
         top_scores[i] = score;
 
-        arq = fopen ("./resources/scores/scores.txt", "w");
+        fp = fopen (SCOREPATH, "w");
+        validade_file(fp);
 
         for (i=0; i<5; i++)
         {
-            fprintf(arq, "%d\n", top_scores[i]);
+            fprintf(fp, "%d\n", top_scores[i]);
         }
     }
 
-
-    fclose (arq) ;
-    
-    return;
+    fclose (fp) ;
 }
